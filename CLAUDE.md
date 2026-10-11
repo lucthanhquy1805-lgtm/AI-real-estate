@@ -78,6 +78,7 @@ Lần đầu tạo DB test: `docker compose exec db psql -U aipi -c "create data
 ## Quy ước
 
 - Code và tên biến bằng tiếng Anh. Docstring, comment, thông báo lỗi và tài liệu bằng tiếng Việt.
+- **Windows:** luôn mở file văn bản với `encoding="utf-8"`; file `.ini` (vd `alembic.ini`) chỉ dùng ký tự ASCII, vì Windows đọc mặc định bằng cp1252.
 - Ruff, line length 120. Type hints đầy đủ. Pydantic v2 cho dữ liệu vào/ra.
 - Mọi migration phải có `downgrade`. Cột dữ liệu nguồn phải khớp `field_policy.yaml`.
 - Mỗi việc trong ROADMAP: viết test trước hoặc cùng lúc. Chỉ đánh `[x]` khi DoD đạt và test, lint xanh.

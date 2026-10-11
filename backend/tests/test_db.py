@@ -18,7 +18,19 @@ BACKEND = Path(__file__).resolve().parents[1]
 @pytest.fixture(scope="module")
 def migrated():
     env = {**os.environ, "DATABASE_URL": DB_URL}
-    run = lambda *a: subprocess.run([sys.executable, "-m", "alembic", *a], cwd=BACKEND, env=env, check=True)  # noqa: E731
+
+    def run(*args: str) -> None:
+        p = subprocess.run(
+            [sys.executable, "-m", "alembic", *args],
+            cwd=BACKEND,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        assert p.returncode == 0, f"alembic {' '.join(args)} lỗi:\n{p.stdout}\n{p.stderr}"
+
     run("downgrade", "base")
     run("upgrade", "head")
     os.environ["DATABASE_URL"] = DB_URL
