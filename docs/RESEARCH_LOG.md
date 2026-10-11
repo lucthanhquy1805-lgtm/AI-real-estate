@@ -20,3 +20,11 @@ Ghi sau mỗi mốc: dữ liệu mới, quyết định, kết quả huấn luy�
 - 6 skills và 4 subagents trong `.claude/`.
 - Test: 48 passed (gồm test MCP và test DB).
 - Việc tiếp theo: T0.4 — migration 0002 (bảng ingestion và tin đăng).
+
+## 2026-10-11 — Môi trường Windows sẵn sàng
+
+- Máy chính: `C:\AI\AI-bat-dong-san` (Windows, Docker Desktop, Python 3.12).
+- DB Docker chạy ở cổng **55432**, vì 5432/5433 đã bị dự án khác chiếm. Image DB: `pgvector/pgvector:0.8.1-pg16-bookworm` + PostGIS (bản bullseye đã hết hỗ trợ).
+- Sửa lỗi Windows: `alembic.ini` chỉ dùng ASCII (cp1252); config luôn đọc `.env` ở gốc repo.
+- Đã chạy: `alembic upgrade head`, seed → `{'sources': 7, 'wards': 5, 'mappings': 14}`; `pytest` → **48 passed**.
+- Việc tiếp theo: T0.4 — migration 0002 (bảng ingestion và tin đăng), làm qua Claude Code.
