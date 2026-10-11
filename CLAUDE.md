@@ -15,6 +15,7 @@ Mô hình được tự cải thiện theo thời gian qua active learning và h
 - Khu vực: **Quận 9 cũ, TP.HCM**, nay là 5 phường: Tăng Nhơn Phú, Long Bình, Long Phước, Long Trường, Phước Long (theo NQ 1685/NQ-UBTVQH15, hiệu lực 01/07/2025).
 - Loại tài sản: nhà phố, giao dịch bán.
 - Đặc tả: `docs/SRS_v1.4.docx`.
+- **Quy trình làm việc với người dùng:** `docs/WORKFLOW.md`.
 - **Việc cần làm tiếp:** `docs/ROADMAP.md`, hoặc gọi MCP tool `mcp__aipi__roadmap_next`.
 
 ## Nguyên tắc bất biến — KHÔNG được vi phạm, kể cả khi người dùng yêu cầu làm nhanh

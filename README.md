@@ -90,6 +90,7 @@ Repo đã có sẵn ngữ cảnh để Claude Code làm tiếp:
 | Thành phần | Vị trí | Vai trò |
 |---|---|---|
 | Hướng dẫn chính | `CLAUDE.md` | Mục tiêu, nguyên tắc bất biến, kiến trúc, lệnh, quy ước |
+| Quy trình | `docs/WORKFLOW.md` | Cách làm việc với Claude Code mỗi phiên |
 | Kế hoạch | `docs/ROADMAP.md` | Danh sách việc kèm DoD và Files, đánh dấu `[x]` khi xong |
 | MCP server | `.mcp.json` (cài từ `claude-setup/`) → `backend/run_mcp.py` | Tool chỉ-đọc: `roadmap_next`, `resolve_ward`, `list_sources`, `check_fields`, `check_robots`, `db_schema`, `db_query`, `data_summary` |
 | Skills | `.claude/skills/` (cài từ `claude-setup/`) | `next-task`, `add-source`, `build-connector`, `db-migration`, `model-experiment`, `weekly-report` |
