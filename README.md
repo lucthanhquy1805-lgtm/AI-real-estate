@@ -61,7 +61,7 @@ cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -e ".[dev]"
-$env:DATABASE_URL="postgresql+psycopg://aipi:aipi@localhost:5432/aipi"
+$env:DATABASE_URL="postgresql+psycopg://aipi:aipi@localhost:5433/aipi"
 alembic upgrade head
 python -m app.db.seed
 uvicorn app.main:app --reload
@@ -72,7 +72,7 @@ uvicorn app.main:app --reload
 ```powershell
 cd backend
 pytest -q                                  # unit + compliance (không cần DB)
-$env:TEST_DATABASE_URL="postgresql+psycopg://aipi:aipi@localhost:5432/aipi_test"
+$env:TEST_DATABASE_URL="postgresql+psycopg://aipi:aipi@localhost:5433/aipi_test"
 pytest -q                                  # thêm test migration, seed, API
 ruff check . ; ruff format --check .
 ```

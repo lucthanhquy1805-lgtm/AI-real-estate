@@ -67,7 +67,7 @@ docker compose up --build                     # DB + API (http://localhost:8000/
 cd backend
 .venv\Scripts\activate
 pytest -q                                     # unit + compliance
-$env:TEST_DATABASE_URL="postgresql+psycopg://aipi:aipi@localhost:5432/aipi_test"; pytest -q   # thêm test DB
+$env:TEST_DATABASE_URL="postgresql+psycopg://aipi:aipi@localhost:5433/aipi_test"; pytest -q   # thêm test DB
 ruff check . ; ruff format .
 alembic revision -m "mo_ta" ; alembic upgrade head ; alembic downgrade -1
 python -m app.db.seed

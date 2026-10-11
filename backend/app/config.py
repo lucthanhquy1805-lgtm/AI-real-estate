@@ -10,9 +10,12 @@ def _default_repo_root() -> Path:
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # Đọc .env ở gốc repo dù chạy lệnh từ thư mục nào (vd backend/); .env trong thư mục hiện tại ghi đè nếu có.
+    model_config = SettingsConfigDict(
+        env_file=(_default_repo_root() / ".env", ".env"), env_file_encoding="utf-8", extra="ignore"
+    )
 
-    database_url: str = "postgresql+psycopg://aipi:aipi@localhost:5432/aipi"
+    database_url: str = "postgresql+psycopg://aipi:aipi@localhost:5433/aipi"
     repo_root: Path = _default_repo_root()
     # Khóa HMAC cho pseudonym người đăng. Không commit; đặt trong .env.
     poster_hmac_key: str = ""

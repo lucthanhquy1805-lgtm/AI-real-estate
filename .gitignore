@@ -12,3 +12,5 @@ data/tmp/
 data/exports/
 mlruns/
 *.log
+*.egg-info/
+build/

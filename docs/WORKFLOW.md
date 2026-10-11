@@ -73,3 +73,14 @@ Vì vậy, cuối mỗi việc **luôn** yêu cầu cập nhật ROADMAP và RES
 Câu mở đầu mẫu cho hôm nay:
 
 > Đọc CLAUDE.md và docs/ROADMAP.md. Làm T0.4 theo skill db-migration: tạo migration 0002 theo docs/DATA_DICTIONARY.md mục 2. Lập kế hoạch trước, chờ tôi đồng ý rồi mới sửa code.
+
+## E. Xử lý sự cố thường gặp
+
+| Triệu chứng | Nguyên nhân | Cách xử lý |
+|---|---|---|
+| `password authentication failed for user "aipi"` | Đang kết nối nhầm vào PostgreSQL khác (thường là bản cài sẵn trên Windows ở cổng 5432) | DB của dự án chạy ở **cổng 5433**. Kiểm tra `.env` có `POSTGRES_PORT=5433` và `DATABASE_URL=...localhost:5433/aipi` |
+| `service "db" is not running` | Chưa chạy, hoặc chạy lỗi do trùng cổng | Chạy `docker compose up -d db` **ở thư mục gốc**, rồi `docker compose ps`. Nếu lỗi: `docker compose logs db` |
+| `port is already allocated` / `Only one usage of each socket address` | Cổng 5433 cũng bị chiếm | Đổi `POSTGRES_PORT` và cổng trong `DATABASE_URL` trong `.env` sang số khác (vd 5434) |
+| Docker báo không kết nối được engine | Docker Desktop chưa mở | Mở Docker Desktop, chờ trạng thái "Engine running" |
+
+Kiểm tra cổng nào đang bị dùng (PowerShell): `netstat -ano | findstr :5432`
