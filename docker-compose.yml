@@ -5,6 +5,7 @@ name: aipi
 services:
   db:
     build: ./infra/docker/postgres
+    restart: unless-stopped   # tự chạy lại khi Docker Desktop khởi động
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-aipi}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aipi}
