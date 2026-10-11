@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         env_file=(_default_repo_root() / ".env", ".env"), env_file_encoding="utf-8", extra="ignore"
     )
 
-    database_url: str = "postgresql+psycopg://aipi:aipi@localhost:5433/aipi"
+    database_url: str = "postgresql+psycopg://aipi:aipi@localhost:55432/aipi"
     repo_root: Path = _default_repo_root()
     # Khóa HMAC cho pseudonym người đăng. Không commit; đặt trong .env.
     poster_hmac_key: str = ""
