@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "aipi": {
+      "type": "stdio",
+      "command": "backend/.venv/Scripts/python.exe",
+      "args": ["backend/run_mcp.py"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL:-postgresql+psycopg://aipi:aipi@localhost:5432/aipi}"
+      }
+    }
+  }
+}

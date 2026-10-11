@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest:*)",
+      "Bash(ruff:*)",
+      "Bash(alembic:*)",
+      "Bash(python -m app.db.seed)",
+      "Bash(docker compose:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "mcp__aipi__roadmap_next",
+      "mcp__aipi__resolve_ward",
+      "mcp__aipi__list_sources",
+      "mcp__aipi__check_fields",
+      "mcp__aipi__db_schema",
+      "mcp__aipi__db_query",
+      "mcp__aipi__data_summary"
+    ]
+  },
+  "enabledMcpjsonServers": ["aipi"]
+}

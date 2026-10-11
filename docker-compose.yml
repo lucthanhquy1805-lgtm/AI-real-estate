@@ -1,0 +1,43 @@
+# Chạy:  docker compose up --build
+# API:   http://localhost:8000/docs
+name: aipi
+
+services:
+  db:
+    build: ./infra/docker/postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aipi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aipi}
+      POSTGRES_DB: ${POSTGRES_DB:-aipi}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aipi} -d ${POSTGRES_DB:-aipi}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/backend/Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-aipi}:${POSTGRES_PASSWORD:-aipi}@db:5432/${POSTGRES_DB:-aipi}
+      REPO_ROOT: /repo
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      # sửa sources.yaml / field_policy.yaml / mapping mà không cần build lại
+      - ./packages:/repo/packages:ro
+      - ./data/reference:/repo/data/reference:ro
+
+volumes:
+  pgdata:

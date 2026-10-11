@@ -1,0 +1,37 @@
+# Copy file này vào .github/workflows/ci.yml khi đưa repo lên GitHub.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: aipi
+          POSTGRES_PASSWORD: aipi
+          POSTGRES_DB: aipi_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U aipi" --health-interval 5s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cài PostGIS vào container DB
+        run: |
+          docker exec ${{ job.services.db.id }} bash -c \
+            "apt-get update -q && apt-get install -y -q postgresql-16-postgis-3 >/dev/null"
+      - run: pip install -e ".[dev]"
+      - run: ruff check . && ruff format --check .
+      - run: pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://aipi:aipi@localhost:5432/aipi_test

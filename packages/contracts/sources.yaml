@@ -1,0 +1,96 @@
+# Source registry — danh mục nguồn dữ liệu.
+# Mọi nguồn PHẢI có mặt ở đây trước khi có bất kỳ connector nào chạy.
+#
+# permission_level: blocked | pending | manual_only | approved_facts_only | approved_licensed
+# allow_training:   false => chỉ dùng cho thống kê, dedup và ĐÁNH GIÁ mô hình; không vào tập huấn luyện
+# tier:             1 = sàn lớn (connector viết tay) | 2 = trang nhỏ (extractor LLM) | 3 = dữ liệu bổ trợ
+# status:           active | paused | blocked   (crawler tự chuyển sang paused khi phát hiện bị chặn)
+
+version: 1
+defaults:
+  user_agent: "AIPropertyResearchBot/0.1 (personal non-commercial research; contact: CHANGE_ME@example.com)"
+  min_delay_seconds: 6
+  max_concurrency_per_domain: 1
+  max_pages_per_day: 1500
+  crawl_window_local: "00:30-06:00"   # giờ thấp điểm, Asia/Ho_Chi_Minh
+
+sources:
+  - id: batdongsan
+    name: Batdongsan.com.vn
+    base_url: https://batdongsan.com.vn
+    tier: 1
+    permission_level: approved_facts_only
+    allow_training: true
+    status: paused            # bật ở W5 khi connector + test đã sẵn sàng
+    discovery: sitemap
+    sitemaps: [https://batdongsan.com.vn/sitemap.xml]
+    min_delay_seconds: 8
+    reviewed_at: 2026-10-10
+    next_review_at: 2026-11-10
+    notes: >
+      robots.txt (10/10/2026): User-agent * Allow /. Điều khoản: cấm sao chép/khai thác thương mại nội dung,
+      cho phép sao chép để dùng nội bộ; bản quyền tin thuộc người đăng; có quyền dựng rào cản kỹ thuật.
+      => chỉ lưu dữ kiện, không lưu ảnh/mô tả, dừng khi bị chặn.
+
+  - id: nhatot
+    name: Nhà Tốt (Chợ Tốt Nhà)
+    base_url: https://www.nhatot.com
+    tier: 1
+    permission_level: approved_facts_only
+    allow_training: false     # robots.txt: Content-Signal ai-train=no
+    status: paused            # bật ở W6
+    discovery: sitemap
+    sitemaps: [https://www.nhatot.com/sitemap-index.xml]
+    min_delay_seconds: 8
+    reviewed_at: 2026-10-10
+    next_review_at: 2026-11-10
+    notes: >
+      robots.txt (10/10/2026): cho phép search, ai-input; ai-train=no; chặn tham số page=, price=, sort=, q=...
+      => không lật trang kết quả tìm kiếm; dữ liệu không dùng để huấn luyện.
+
+  # Tầng 2 — chọn ở W7 theo độ phủ Quận 9 cũ. Để pending cho tới khi đọc robots/điều khoản.
+  - id: tier2_candidates
+    name: Trang rao vặt / BĐS nhỏ (chưa chọn)
+    base_url: null
+    tier: 2
+    permission_level: pending
+    allow_training: false
+    status: paused
+    notes: Danh sách cụ thể sẽ được thêm ở W7, mỗi domain một mục riêng.
+
+  # Tầng 3 — dữ liệu bổ trợ
+  - id: osm
+    name: OpenStreetMap (Geofabrik extract Vietnam)
+    base_url: https://download.geofabrik.de/asia/vietnam.html
+    tier: 3
+    permission_level: approved_licensed
+    license: ODbL-1.0 — ghi công "© OpenStreetMap contributors"
+    allow_training: true
+    status: paused
+    notes: Tải theo đợt (W9) để lấy POI, đường, có thể cả ranh giới.
+
+  - id: hcm_land_price
+    name: Bảng giá đất TP.HCM (văn bản UBND TP.HCM hiện hành)
+    base_url: null
+    tier: 3
+    permission_level: pending
+    allow_training: true
+    status: paused
+    notes: Văn bản nhà nước; cần xác định quyết định đang hiệu lực và nhập thủ công/CSV (W9).
+
+  - id: nd357_market_data
+    name: Hệ thống thông tin nhà ở và thị trường BĐS (Nghị định 357/2025/NĐ-CP)
+    base_url: null
+    tier: 3
+    permission_level: pending
+    allow_training: true
+    status: paused
+    notes: Cần nộp hồ sơ xin khai thác dữ liệu; có tính phí.
+
+  - id: manual_import
+    name: Nhập tay / CSV của bạn (vài căn nhà hiện có)
+    base_url: null
+    tier: 3
+    permission_level: manual_only
+    allow_training: true
+    status: active

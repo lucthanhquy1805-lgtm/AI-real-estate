@@ -1,0 +1,15 @@
+old_ward_name,old_district_pre2021,old_city_2021_2025,new_ward_slug,new_ward_name,mapping_type,note
+Long Bình,Quận 9,TP Thủ Đức,long_binh,Long Bình,full,
+Long Thạnh Mỹ,Quận 9,TP Thủ Đức,long_binh,Long Bình,partial,Phần còn lại của Long Thạnh Mỹ; phải xác định bằng toạ độ
+Long Thạnh Mỹ,Quận 9,TP Thủ Đức,tang_nhon_phu,Tăng Nhơn Phú,partial,Một phần Long Thạnh Mỹ; phải xác định bằng toạ độ
+Tân Phú,Quận 9,TP Thủ Đức,tang_nhon_phu,Tăng Nhơn Phú,full,
+Hiệp Phú,Quận 9,TP Thủ Đức,tang_nhon_phu,Tăng Nhơn Phú,full,
+Tăng Nhơn Phú A,Quận 9,TP Thủ Đức,tang_nhon_phu,Tăng Nhơn Phú,full,
+Tăng Nhơn Phú B,Quận 9,TP Thủ Đức,tang_nhon_phu,Tăng Nhơn Phú,full,
+Long Phước,Quận 9,TP Thủ Đức,long_phuoc,Long Phước,full,
+Trường Thạnh,Quận 9,TP Thủ Đức,long_phuoc,Long Phước,full,
+Long Trường,Quận 9,TP Thủ Đức,long_truong,Long Trường,full,
+Phú Hữu,Quận 9,TP Thủ Đức,long_truong,Long Trường,full,
+Phước Long A,Quận 9,TP Thủ Đức,phuoc_long,Phước Long,full,
+Phước Long B,Quận 9,TP Thủ Đức,phuoc_long,Phước Long,full,
+Phước Bình,Quận 9,TP Thủ Đức,phuoc_long,Phước Long,full,

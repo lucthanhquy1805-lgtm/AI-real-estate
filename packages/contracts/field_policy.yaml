@@ -1,0 +1,64 @@
+# Field-level data policy (SRS v1.4, mục 7).
+# Pipeline, test tuân thủ và API đều đọc file này. Không hard-code ở chỗ khác.
+#
+# store:   được ghi vào bảng lâu dài hay không
+# display: được hiển thị trên giao diện nội bộ hay không
+
+version: 1
+classes:
+  FACT:        {store: true,  display: true}
+  DERIVED:     {store: true,  display: true}
+  FINGERPRINT: {store: true,  display: false}
+  EMBEDDING:   {store: true,  display: false}
+  PSEUDONYM:   {store: true,  display: false}
+  CONTENT:     {store: false, display: false}   # chỉ xử lý tạm trong job
+  MEDIA:       {store: false, display: false}   # chỉ xử lý tạm trong job
+  PERSONAL:    {store: false, display: false}   # không bao giờ lưu
+
+fields:
+  # FACT
+  source_listing_id: FACT
+  source_url: FACT
+  transaction_type: FACT
+  property_type: FACT
+  asking_price_vnd: FACT
+  price_raw: FACT
+  land_area_sqm: FACT
+  floor_area_sqm: FACT
+  floors: FACT
+  bedrooms: FACT
+  bathrooms: FACT
+  direction: FACT
+  ward_name_old: FACT
+  district_alias: FACT
+  posted_at: FACT
+  # DERIVED
+  ward_code_new: DERIVED
+  price_per_sqm_vnd: DERIVED
+  frontage_type: DERIVED          # mặt tiền / hẻm
+  alley_width_m: DERIVED
+  legal_status: DERIVED           # sổ riêng / sổ chung / giấy tay ...
+  geo_point: DERIVED
+  cluster_id: DERIVED
+  trust_score: DERIVED
+  # FINGERPRINT
+  image_phash: FINGERPRINT
+  image_dhash: FINGERPRINT
+  text_simhash: FINGERPRINT
+  html_checksum: FINGERPRINT
+  # EMBEDDING
+  text_embedding: EMBEDDING
+  image_embedding: EMBEDDING
+  # PSEUDONYM
+  poster_pseudonym: PSEUDONYM     # HMAC-SHA256(phone, POSTER_HMAC_KEY)
+  # CONTENT / MEDIA / PERSONAL — liệt kê để test có thể chặn
+  title: CONTENT
+  description: CONTENT
+  image_url: MEDIA
+  image_bytes: MEDIA
+  video_url: MEDIA
+  poster_name: PERSONAL
+  poster_phone: PERSONAL
+  poster_email: PERSONAL
+  poster_avatar_url: PERSONAL
+  house_number: PERSONAL
