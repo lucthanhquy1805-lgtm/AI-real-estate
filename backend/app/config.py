@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     def reference_dir(self) -> Path:
         return self.repo_root / "data" / "reference"
 
+    @property
+    def transient_dir(self) -> Path:
+        # Thư mục tạm của crawler (đã nằm trong .gitignore); TransientStore xóa sau mỗi job.
+        return self.repo_root / "data" / "tmp"
+
 
 @lru_cache
 def get_settings() -> Settings:

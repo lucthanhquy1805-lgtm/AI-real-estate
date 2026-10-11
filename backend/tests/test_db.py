@@ -220,6 +220,82 @@ def test_free_text_columns_reject_leaks(migrated, sql, value, ok):
         conn.rollback()
 
 
+# ---------------------------------------------------------------- T0.5: HttpClient ghi fetch_log và pause nguồn vào DB
+
+
+def test_http_client_writes_fetch_log_and_pauses_source_in_db(migrated):
+    import httpx
+    from test_crawler_core import UA, FakeClock, FakeSite
+
+    from app.contracts import load_sources
+    from ingestion.core.http import HttpClient, SourceBlocked
+    from ingestion.core.rate_limit import RateLimiter
+    from ingestion.core.recorders import DbFetchLog, DbSourceStatus
+
+    with migrated.begin() as conn:
+        _source_id(conn)
+        conn.execute(text("update data_sources set status = 'active' where source_id = 'batdongsan'"))
+        job_id = _new_job(conn, "batdongsan")
+
+    base = "https://batdongsan.com.vn"
+    clock = FakeClock()
+    site = FakeSite(clock, robots="User-agent: *\nDisallow: /*page=\n").add("/tin-1").add("/chan", 429)
+    status_store = DbSourceStatus(migrated)
+    assert not status_store.is_paused("batdongsan") and status_store.is_paused("khong_ton_tai")
+    client = HttpClient(
+        load_sources().get("batdongsan").model_copy(update={"status": "active"}),
+        user_agent=UA,
+        min_delay_seconds=8,
+        fetch_log=DbFetchLog(migrated, job_id),
+        status_store=status_store,
+        transport=httpx.MockTransport(site.handler),
+        limiter=RateLimiter(1, clock=clock, sleep=clock.sleep),
+    )
+    assert client.fetch(f"{base}/tin-1").ok
+    assert client.fetch(f"{base}/ban-nha?page=2").outcome == "skipped_robots"
+    assert client.fetch("https://khac.test/x").outcome == "skipped_policy"
+    with pytest.raises(SourceBlocked):
+        for _ in range(3):
+            client.fetch(f"{base}/chan")
+
+    with migrated.connect() as conn:
+        rows = conn.execute(
+            text("select outcome, request_url, http_status from fetch_log where job_id = :j order by id"),
+            {"j": job_id},
+        ).all()
+        status = conn.execute(text("select status from data_sources where source_id = 'batdongsan'")).scalar_one()
+    assert [r.outcome for r in rows] == ["ok", "ok", "skipped_robots", "skipped_policy", "error", "error", "blocked"]
+    assert rows[2].request_url == f"{base}/ban-nha?page=2" and rows[2].http_status is None
+    assert rows[3].request_url is None  # URL ngoài base_url chỉ lưu hash
+    assert status == "paused"
+    assert status_store.is_paused("batdongsan")
+
+
+def test_seed_never_reactivates_paused_source(migrated, monkeypatch):
+    """Crawler pause nguồn trong DB; seed lại từ YAML 'active' không được mở lại nguồn đó."""
+    from app.contracts import SourceStatus, load_sources
+    from app.db import seed as seed_mod
+
+    with migrated.begin() as conn:
+        _source_id(conn)  # seed bình thường theo YAML hiện tại
+        conn.execute(text("update data_sources set status = 'paused' where source_id = 'batdongsan'"))
+        conn.execute(text("delete from data_sources where source_id = 'nhatot'"))
+        conn.execute(text("update data_sources set status = 'blocked' where source_id = 'tier2_candidates'"))
+
+    reg = load_sources()
+    for s in reg.sources:
+        if s.id in ("batdongsan", "nhatot"):
+            s.status = SourceStatus.ACTIVE
+    monkeypatch.setattr(seed_mod, "load_sources", lambda: reg)
+    with Session(migrated) as s:
+        seed_mod.seed(s)
+    with migrated.connect() as conn:
+        rows = dict(conn.execute(text("select source_id, status from data_sources")).all())
+    assert rows["batdongsan"] == "paused"  # đang paused trong DB -> giữ nguyên
+    assert rows["nhatot"] == "active"  # dòng mới -> lấy theo YAML
+    assert rows["tier2_candidates"] == "blocked"  # YAML paused không hạ blocked xuống paused
+
+
 def test_downgrade_0002_then_upgrade(migrated):
     """Chạy cuối file: downgrade -1 xóa bảng tin đăng, upgrade head tạo lại."""
     _alembic("downgrade", "-1")

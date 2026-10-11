@@ -47,3 +47,24 @@ Ghi sau mỗi mốc: dữ liệu mới, quyết định, kết quả huấn luy�
 - Việc dời sang T0.5, T0.6, T2.5, T3.3 đã ghi trong ROADMAP.
 - Test: 77 passed với DB (47 passed + 30 skipped khi không có DB); ruff sạch.
 - Việc tiếp theo: T0.5 — crawler core.
+
+## 2026-10-11 — T0.5: crawler core
+
+- Module mới trong `backend/ingestion/core/`: `rate_limit.py`, `robots.py`, `block_detect.py`, `transient.py`, `http.py`, `recorders.py` (ghi DB).
+- robots.txt: tự viết parser RFC 9309, vì `urllib.robotparser` không hiểu `*`/`$`, sẽ để lọt `/*page=` kiểu Nhà Tốt.
+  Luật dài nhất thắng, bằng nhau thì Allow thắng; giải mã %xx. robots trả 4xx (trừ 404/410), 5xx, lỗi mạng hay redirect → chặn hết.
+- HttpClient: policy gate (`can_crawl` + DB không paused + UA không còn `CHANGE_ME`) → chỉ host thuộc base_url, không ảnh/video
+  (theo đuôi file và Content-Type) → robots → rate limit theo cả site (gộp subdomain, limiter dùng chung trong process,
+  không nhanh hơn `min_delay_seconds` của nguồn) → request (không cookie, không tự theo redirect; mỗi bước redirect kiểm tra lại).
+- Bị chặn: trang challenge/CAPTCHA, 3 lần 403/429 liên tiếp, hoặc Retry-After > 1 giờ → đặt cờ chặn trước, rồi ghi log
+  `blocked` và pause nguồn trong `data_sources` (log hay DB lỗi thì client vẫn dừng). Retry-After (số giây hoặc HTTP-date) chỉ làm chậm hơn.
+- `fetch_log`: mọi request đều có một dòng, kể cả robots.txt và URL bị bỏ qua. `request_url` = NULL khi ngoài base_url hoặc là media;
+  lỗi chỉ ghi tên lớp lỗi hoặc `HTTP <mã>`.
+- Seed giờ không bao giờ chuyển nguồn paused/blocked trong DB sang active; mở lại nguồn để T0.6 (lệnh resume).
+- Test: `tests/conftest.py` chặn socket và DNS ra ngoài trong mọi test. Rà soát compliance: 0 BLOCKER, 5 MAJOR đã sửa
+  (cookie jar, rate limit theo subdomain, delay thấp hơn YAML, log lỗi làm mất pause, seed mở lại nguồn); việc còn lại ghi vào T0.6/T1.1.
+- Rà soát compliance lần 2: 0 BLOCKER, 1 MAJOR đã sửa (delay không bao giờ dưới mặc định 6 giây của registry, kể cả khi
+  người gọi truyền số nhỏ hơn). Kèm theo: Retry-After được ghi khi còn giữ khóa site; limiter truyền tường minh
+  (mặc định dùng chung trong process); không đọc body ảnh/video; seed giữ `blocked`.
+- Test: 138 passed với DB; ruff sạch.
+- Việc tiếp theo: T0.6 — adapter interface + job runner (CLI `--dry-run`).

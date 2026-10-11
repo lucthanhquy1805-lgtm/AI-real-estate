@@ -27,7 +27,7 @@ Giả định: 1 người, 20–30 giờ/tuần. Thứ tự là thứ tự ưu t
 - [x] T0.4 — Migration 0002: bảng ingestion và tin đăng
   - DoD: các bảng theo docs/DATA_DICTIONARY.md mục 2; provenance NOT NULL; test_compliance_schema xanh; downgrade chạy được
   - Files: backend/app/db/models.py, backend/alembic/versions/0002_*.py, docs/DATA_DICTIONARY.md
-- [ ] T0.5 — Crawler core: HttpClient, RateLimiter, RobotsChecker, BlockDetector, TransientStore
+- [x] T0.5 — Crawler core: HttpClient, RateLimiter, RobotsChecker, BlockDetector, TransientStore
   - DoD: (a) không bao giờ gửi 2 request cùng domain cách nhau < min_delay; (b) URL robots chặn → không fetch và ghi fetch_log outcome=skipped_robots; (c) 3 lần 403/429 liên tiếp hoặc trang challenge/CAPTCHA → nguồn chuyển paused + log; (d) thư mục tạm trống sau job (kể cả khi lỗi); đủ unit test, không gọi mạng thật trong test
   - Files: backend/ingestion/core/{http.py,rate_limit.py,robots.py,block_detect.py,transient.py}
   - Từ rà soát T0.4: chỉ ghi `fetch_log.request_url` khi host thuộc `base_url` của nguồn (URL khác chỉ lưu `url_hash`); `error_summary` chỉ ghi `type(exc).__name__` + mã lỗi, ValidationError dùng `include_input=False`
@@ -35,6 +35,7 @@ Giả định: 1 người, 20–30 giờ/tuần. Thứ tự là thứ tự ưu t
   - DoD: `python -m ingestion.run --source batdongsan --limit 20 --dry-run`; mọi bước discover → fetch → parse → normalize → persist đi qua policy gate và FieldPolicy.filter_for_storage
   - Files: backend/ingestion/core/adapter.py, backend/ingestion/run.py
   - Từ rà soát T0.4: persist kiểm tra `feature_name` bằng `FieldPolicy.can_store` (fail closed); quyết định cách tách cột kỹ thuật khỏi `filter_for_storage` (lọc phần dữ liệu nguồn trước rồi mới gộp, hoặc thêm lớp TECHNICAL), không tắt kiểm tra; test `content_checksum` chỉ băm trường FACT; `details` của data_quality_issues tạo qua một helper duy nhất
+  - Từ rà soát T0.5: (1) lệnh `python -m ingestion.resume <source_id> --reason ...` để mở lại nguồn có chủ đích (seed giờ không bao giờ chuyển paused→active), ghi RESEARCH_LOG; cân nhắc lưu `paused_at`/`paused_reason` (khai báo field_policy trước); (2) job giữ `pg_advisory_lock` theo source_id để khác process vẫn 1 kết nối/site; (3) gọi `TransientStore.sweep()` khi đã giữ lock; (4) job bắt `SourceBlocked` → status `aborted_blocked`, tăng `blocked_count`; (5) chốt quy ước cột kỹ thuật của fetch_log (`http_status`, `latency_ms`, `outcome`) với field policy; (6) kiểm tra lại trạng thái paused trong DB mỗi N request (process khác có thể pause giữa job); (7) áp dụng `max_pages_per_day` và `crawl_window_local` của sources.yaml
 - [ ] T0.7 — Pseudonym người đăng (HMAC-SHA256) + kiểm tra khóa
   - DoD: thiếu POSTER_HMAC_KEY thì job từ chối chạy; cùng SĐT + khóa → cùng pseudonym; chuẩn hóa SĐT (+84/0, khoảng trắng)
   - Files: backend/ingestion/extract/pseudonym.py
@@ -44,6 +45,7 @@ Giả định: 1 người, 20–30 giờ/tuần. Thứ tự là thứ tự ưu t
 - [ ] T1.1 — Connector Batdongsan: discovery qua sitemap, lọc URL tin nhà phố bán tại Quận 9 cũ / TP Thủ Đức
   - DoD: skill `build-connector` được tuân thủ; 20 fixture HTML đã che thông tin cá nhân; parser trích đủ trường FACT; test parser từ fixture
   - Files: backend/ingestion/connectors/batdongsan/, data/fixtures/batdongsan/
+  - Từ rà soát T0.5: chạy BlockDetector trên fixture thật của trang tin (form liên hệ có thể chứa reCAPTCHA → pause oan); slug URL tin chứa gần như nguyên tiêu đề, có khi có số nhà → lưu `request_url`/`source_url` dạng rút gọn (mã tin) hoặc chỉ URL sitemap; kiểm tra base_url có redirect sang www. không (robots.txt bị redirect = chặn hết)
 - [ ] T1.2 — Normalize tin đăng: giá ("5,2 tỷ", "thỏa thuận"), diện tích, giá/m², loại tài sản, resolve_ward
   - DoD: test bảng ≥ 30 chuỗi giá/diện tích thực tế; giá "thỏa thuận" → null + cờ
   - Files: backend/ingestion/normalize/{price.py,area.py}
@@ -97,7 +99,7 @@ Giả định: 1 người, 20–30 giờ/tuần. Thứ tự là thứ tự ưu t
 
 ## Việc mở (không theo tuần)
 
-- [ ] X.1 — Điền email liên hệ thật vào User-Agent trong sources.yaml
+- [ ] X.1 — Điền email liên hệ thật vào User-Agent trong sources.yaml (bắt buộc: từ T0.5, HttpClient từ chối chạy khi UA còn `CHANGE_ME`)
 - [ ] X.2 — Mã đơn vị hành chính chính thức cho 5 phường (admin_units.official_code)
 - [ ] X.3 — Đối chiếu bảng ánh xạ với văn bản gốc NQ 1685/NQ-UBTVQH15
 - [ ] X.4 — Rà soát lại robots/điều khoản mỗi tháng (next_review_at trong sources.yaml)

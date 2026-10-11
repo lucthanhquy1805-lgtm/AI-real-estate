@@ -6,11 +6,11 @@ Idempotent: chạy lại nhiều lần không tạo bản ghi trùng.
 
 from datetime import date
 
-from sqlalchemy import delete
+from sqlalchemy import case, delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.contracts import load_sources, load_ward_mapping
+from app.contracts import SourceStatus, load_sources, load_ward_mapping
 from app.db.models import AdminUnit, AdminUnitMapping, DataSource
 from app.db.session import get_engine
 
@@ -35,7 +35,18 @@ def seed(session: Session) -> dict[str, int]:
             notes=s.notes,
         )
         stmt = insert(DataSource).values(**values)
-        session.execute(stmt.on_conflict_do_update(index_elements=["source_id"], set_=values))
+        # Seed chỉ được hạ trạng thái, không bao giờ mở lại nguồn đang paused/blocked trong DB
+        # (có thể do crawler tự pause khi bị chặn). Mở lại phải là thao tác có chủ đích (T0.6).
+        # Thứ tự nghiêm: active < paused < blocked. Giữ blocked; paused không bị nâng lên active.
+        status = case(
+            (DataSource.status == SourceStatus.BLOCKED.value, DataSource.status),
+            (
+                (DataSource.status == SourceStatus.PAUSED.value) & (stmt.excluded.status == SourceStatus.ACTIVE.value),
+                DataSource.status,
+            ),
+            else_=stmt.excluded.status,
+        )
+        session.execute(stmt.on_conflict_do_update(index_elements=["source_id"], set_={**values, "status": status}))
 
     rows = load_ward_mapping()
     for slug, name in sorted({(r.new_ward_slug, r.new_ward_name) for r in rows}):
