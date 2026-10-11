@@ -24,15 +24,17 @@ Giả định: 1 người, 20–30 giờ/tuần. Thứ tự là thứ tự ưu t
   - DoD: `docker compose up --build` → /health trả postgis, vector, pg_trgm
   - Files: docker-compose.yml, infra/docker/*, backend/alembic/*, backend/app/*
 - [x] T0.3b — Tài liệu cho Claude Code: CLAUDE.md, ROADMAP, skills, subagents, MCP server
-- [ ] T0.4 — Migration 0002: bảng ingestion và tin đăng
+- [x] T0.4 — Migration 0002: bảng ingestion và tin đăng
   - DoD: các bảng theo docs/DATA_DICTIONARY.md mục 2; provenance NOT NULL; test_compliance_schema xanh; downgrade chạy được
   - Files: backend/app/db/models.py, backend/alembic/versions/0002_*.py, docs/DATA_DICTIONARY.md
 - [ ] T0.5 — Crawler core: HttpClient, RateLimiter, RobotsChecker, BlockDetector, TransientStore
   - DoD: (a) không bao giờ gửi 2 request cùng domain cách nhau < min_delay; (b) URL robots chặn → không fetch và ghi fetch_log outcome=skipped_robots; (c) 3 lần 403/429 liên tiếp hoặc trang challenge/CAPTCHA → nguồn chuyển paused + log; (d) thư mục tạm trống sau job (kể cả khi lỗi); đủ unit test, không gọi mạng thật trong test
   - Files: backend/ingestion/core/{http.py,rate_limit.py,robots.py,block_detect.py,transient.py}
+  - Từ rà soát T0.4: chỉ ghi `fetch_log.request_url` khi host thuộc `base_url` của nguồn (URL khác chỉ lưu `url_hash`); `error_summary` chỉ ghi `type(exc).__name__` + mã lỗi, ValidationError dùng `include_input=False`
 - [ ] T0.6 — Adapter interface + job runner tối thiểu (chạy tay qua CLI, chưa cần queue)
   - DoD: `python -m ingestion.run --source batdongsan --limit 20 --dry-run`; mọi bước discover → fetch → parse → normalize → persist đi qua policy gate và FieldPolicy.filter_for_storage
   - Files: backend/ingestion/core/adapter.py, backend/ingestion/run.py
+  - Từ rà soát T0.4: persist kiểm tra `feature_name` bằng `FieldPolicy.can_store` (fail closed); quyết định cách tách cột kỹ thuật khỏi `filter_for_storage` (lọc phần dữ liệu nguồn trước rồi mới gộp, hoặc thêm lớp TECHNICAL), không tắt kiểm tra; test `content_checksum` chỉ băm trường FACT; `details` của data_quality_issues tạo qua một helper duy nhất
 - [ ] T0.7 — Pseudonym người đăng (HMAC-SHA256) + kiểm tra khóa
   - DoD: thiếu POSTER_HMAC_KEY thì job từ chối chạy; cùng SĐT + khóa → cùng pseudonym; chuẩn hóa SĐT (+84/0, khoảng trắng)
   - Files: backend/ingestion/extract/pseudonym.py
@@ -67,6 +69,7 @@ Giả định: 1 người, 20–30 giờ/tuần. Thứ tự là thứ tự ưu t
   - DoD: chỉ lưu vector/hash + tên/phiên bản model; test thư mục tạm trống
 - [ ] T2.5 — Dữ liệu tầng 3: ranh giới phường (point-in-polygon), OSM POI/đường, bảng giá đất TP.HCM
   - DoD: ≥ 90% tin có ward_slug_new; đặc trưng khoảng cách tới tiện ích; Long Thạnh Mỹ được tách bằng toạ độ
+  - Từ rà soát T0.4: làm tròn `geo_point` (~3 chữ số thập phân) + cân nhắc CHECK làm tròn và bbox Q9 cũ
 - [ ] T2.6 — Dedup và gom cụm xuyên nguồn
   - DoD: precision ≥ 0,9 trên 300 cặp gán nhãn; recall được báo cáo
 - [ ] T2.7 — Mốc quyết định W8: nếu < 600 tin nhà phố đang hoạt động → mở rộng sang phường lân cận
@@ -77,6 +80,7 @@ Giả định: 1 người, 20–30 giờ/tuần. Thứ tự là thứ tự ưu t
 - [ ] T3.2 — Công cụ review/gán nhãn (Next.js tối giản, phím tắt) + bảng labels, review_tasks
 - [ ] T3.3 — Định giá bước 1–3: baseline median → LightGBM cấu trúc → + không gian (skill `model-experiment`)
   - DoD: temporal + group split; MedAPE, coverage; SHAP; model card v0
+  - Từ rà soát T0.4: một điểm dựng tập huấn luyện duy nhất (view `training_listings` hoặc hàm) loại nguồn `allow_training = false`, kèm test
 - [ ] T3.4 — Định giá bước 4–5: + embedding mô tả, + embedding ảnh; khoảng giá (quantile/conformal); ablation
 - [ ] T3.5 — Mô hình độ uy tín: labeling functions → label model → GBM → calibration
   - DoD: Precision@50 ≥ 0,7 trên tập review; output điểm + 3 lý do; không dùng từ "lừa đảo"

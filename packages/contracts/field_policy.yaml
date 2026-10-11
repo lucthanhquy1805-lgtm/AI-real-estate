@@ -32,8 +32,13 @@ fields:
   ward_name_old: FACT
   district_alias: FACT
   posted_at: FACT
+  request_url: FACT              # fetch_log: chỉ URL trang tin / sitemap, DB chặn URL ảnh-video
   # DERIVED
-  ward_code_new: DERIVED
+  ward_slug_new: DERIVED          # FK admin_units.slug, từ resolve_ward
+  ward_method: DERIVED            # text | geo
+  ward_confidence: DERIVED
+  ward_flags: DERIVED             # AMBIGUOUS_WARD, NO_CONTEXT, ...
+  changed_fields: DERIVED         # tên trường đổi giữa 2 lần quan sát
   price_per_sqm_vnd: DERIVED
   frontage_type: DERIVED          # mặt tiền / hẻm
   alley_width_m: DERIVED
@@ -46,6 +51,8 @@ fields:
   image_dhash: FINGERPRINT
   text_simhash: FINGERPRINT
   html_checksum: FINGERPRINT
+  content_checksum: FINGERPRINT   # sha256 các trường FACT đã chuẩn hóa
+  url_hash: FINGERPRINT           # sha256 URL đã fetch
   # EMBEDDING
   text_embedding: EMBEDDING
   image_embedding: EMBEDDING

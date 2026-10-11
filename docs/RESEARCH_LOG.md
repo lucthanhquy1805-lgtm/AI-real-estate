@@ -28,3 +28,22 @@ Ghi sau mỗi mốc: dữ liệu mới, quyết định, kết quả huấn luy�
 - Sửa lỗi Windows: `alembic.ini` chỉ dùng ASCII (cp1252); config luôn đọc `.env` ở gốc repo.
 - Đã chạy: `alembic upgrade head`, seed → `{'sources': 7, 'wards': 5, 'mappings': 14}`; `pytest` → **48 passed**.
 - Việc tiếp theo: T0.4 — migration 0002 (bảng ingestion và tin đăng), làm qua Claude Code.
+
+## 2026-10-11 — T0.4: migration 0002 (ingestion và tin đăng)
+
+- Thêm 6 bảng: `ingestion_jobs`, `fetch_log`, `listings`, `listing_features`, `listing_observations`, `data_quality_issues`.
+  Migration viết tay, có downgrade; `alembic check` xác nhận ORM khớp migration.
+- field_policy: đổi `ward_code_new` → `ward_slug_new` (khớp code); thêm `ward_method`, `ward_confidence`, `ward_flags`,
+  `changed_fields` (DERIVED), `content_checksum`, `url_hash` (FINGERPRINT), `request_url` (FACT, chỉ trong fetch_log).
+- Chọn tên `request_url` thay vì `url` để không mở đường cho một cột `url` chung chung ở bảng khác.
+- Ràng buộc chống rò dữ liệu ở tầng DB (sau rà soát compliance, 0 BLOCKER, 7 WARN):
+  - URL ảnh/video bị CHECK chặn ở `fetch_log.request_url` và `listings.source_url`.
+  - `price_raw` không được chứa dãy ≥ 9 chữ số, "lh", "zalo", "liên hệ", "@".
+  - `listing_features.value` chỉ là số, bool hoặc chuỗi ≤ 64 ký tự.
+  - `error_summary` ≤ 1000 ký tự; `checkpoint` và `details` là object ≤ 2 KB; cả ba không được chứa dãy dạng SĐT.
+    Mẫu SĐT đòi không dính chữ số hai bên, nên giá 11 chữ số (vd 10000000000) không bị chặn nhầm (có test).
+  - Giới hạn: SĐT viết có khoảng trắng ("090 123 4567") không bị CHECK bắt; tầng code (T0.5, T0.6) phải chặn.
+- Test compliance: miễn trừ cột kỹ thuật theo cặp (bảng, cột) và rà đủ 6 bảng mới.
+- Việc dời sang T0.5, T0.6, T2.5, T3.3 đã ghi trong ROADMAP.
+- Test: 77 passed với DB (47 passed + 30 skipped khi không có DB); ruff sạch.
+- Việc tiếp theo: T0.5 — crawler core.
