@@ -3,10 +3,20 @@
     "aipi": {
       "type": "stdio",
       "command": "backend/.venv/Scripts/python.exe",
-      "args": ["backend/run_mcp.py"],
+      "args": [
+        "backend/run_mcp.py"
+      ],
       "env": {
         "DATABASE_URL": "${DATABASE_URL:-postgresql+psycopg://aipi:aipi@localhost:55432/aipi}"
       }
+    },
+    "graft": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@nanonets/graft",
+        "mcp"
+      ]
     }
   }
 }
